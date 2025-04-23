@@ -4,75 +4,113 @@ class Program
 {
     static void Main(string[] args)
     {
-        int[] numbers = [1, 2, 3, 4, 5];
-        Console.WriteLine($"numbers: {string.Join(", ", numbers)}");
-        var result = numbers.Aggregate((x, y) => x - y);
-        Console.WriteLine($"Aggregate((x, y) => x - y): {result}");
-
-        var sum = numbers.Aggregate((x, y) => x + y);
-        Console.WriteLine($"Aggregate((x, y) => x + y): {sum}");
-
-        var factorial = Factorial(5);
-        Console.WriteLine($"Factorial(5): {factorial}");
-
-        var contacts = new List<Contact>()
+        var cars = new List<Car>()
         {
-            new Contact() { Name = "Андрей", Phone = 79994500508 },
-            new Contact() { Name = "Сергей", Phone = 799990455 },
-            new Contact() { Name = "Иван", Phone = 79999675334 },
-            new Contact() { Name = "Игорь", Phone = 8884994 },
-            new Contact() { Name = "Анна", Phone = 665565656 },
-            new Contact() { Name = "Василий", Phone = 3434 }
+            new Car("Suzuki", "JP"),
+            new Car("Toyota", "JP"),
+            new Car("Opel", "DE"),
+            new Car("Kamaz", "RUS"),
+            new Car("Lada", "RUS"),
+            new Car("Honda", "JP"),
         };
 
-        var invalidContacts = from contact in contacts
-            let phone = contact.Phone.ToString()
-            where !phone.StartsWith("7") && phone.Length != 11
-            select contact;
+        var carsByCountry = from car in cars
+            group car by car.CountryCode;
 
-        foreach (var contact in invalidContacts)
-            Console.WriteLine($"{contact.Name} {contact.Phone}");
+        carsByCountry = cars.GroupBy(car => car.CountryCode);
 
-        int[] simpleNumbers = [3, 5, 7];
-        var simpleNumberSum = simpleNumbers.Sum();
-        Console.WriteLine($"Sum: {simpleNumberSum}");
-
-        var students = new List<Student>
+        foreach (var group in carsByCountry)
         {
-            new() { Name = "Андрей", Age = 23 },
-            new() { Name = "Сергей", Age = 27 },
-            new() { Name = "Дмитрий", Age = 29 }
-        };
+            Console.WriteLine(group.Key + ": ");
 
-        var totalAge = students.Sum(s => s.Age);
-        Console.WriteLine($"TotalAge: {totalAge}");
+            foreach (var car in group)
+            {
+                Console.WriteLine(car.Manufacturer);
+            }
 
-        var average = Average([1, 5, 7, 9, 11]);
-        Console.WriteLine($"Average: {average}");
+            Console.WriteLine();
+        }
+
+        var carsByCountry2 = from car in cars
+            group car by car.CountryCode
+            into grouping
+            select new
+            {
+                Name = grouping.Key,
+                Count = grouping.Count(),
+                Cars = from p in grouping select p
+            };
+
+        carsByCountry2 = cars
+            .GroupBy(car => car.CountryCode)
+            .Select(g => new
+            {
+                Name = g.Key,
+                Count = g.Count(),
+                Cars = g.Select(c => c)
+            });
+
+        foreach (var group in carsByCountry2)
+        {
+            Console.WriteLine($"{group.Name}: {group.Count}");
+
+            foreach (var car in group.Cars)
+                Console.WriteLine(car.Manufacturer);
+
+            Console.WriteLine();
+        }
+
+
+        var phoneBook = new List<Contact>();
+
+        phoneBook.Add(new Contact("Игорь", 79990000001, "igor@example.com"));
+        phoneBook.Add(new Contact("Сергей", 79990000010, "serge@example.com"));
+        phoneBook.Add(new Contact("Анатолий", 79990000011, "anatoly@example.com"));
+        phoneBook.Add(new Contact("Валерий", 79990000012, "valera@example.com"));
+        phoneBook.Add(new Contact("Сергей", 799900000013, "serg@gmail.com"));
+        phoneBook.Add(new Contact("Иннокентий", 799900000013, "innokentii@example.com"));
+
+        var grouped = phoneBook.GroupBy(p => p.Email.Split('@').Last());
+        foreach (var group in grouped)
+        {
+            if (group.Key.Contains("example"))
+            {
+                Console.WriteLine("Фейковые адреса:");
+                foreach (var contact in group)
+                    Console.WriteLine($"{contact.Name} {contact.PhoneNumber} {contact.Email}");
+            }
+            else
+            {
+                Console.WriteLine("Реальные адреса:");
+                foreach (var contact in group)
+                    Console.WriteLine($"{contact.Name} {contact.PhoneNumber} {contact.Email}");
+            }
+        }
     }
 
-    public class Student
+    class Contact
     {
         public string Name { get; set; }
-        public int Age { get; set; }
+        public long PhoneNumber { get; set; }
+        public string Email { get; set; }
+
+        public Contact(string name, long phoneNumber, string email)
+        {
+            Name = name;
+            PhoneNumber = phoneNumber;
+            Email = email;
+        }
     }
 
-    public class Contact
+    public class Car
     {
-        public string Name { get; set; }
-        public long Phone { get; set; }
-    }
+        public string Manufacturer { get; set; }
+        public string CountryCode { get; set; }
 
-    static double Average(int[] numbers)
-    {
-        return numbers.Sum() / (double)numbers.Length;
-    }
-
-    static int Factorial(int number)
-    {
-        var numbers = new List<int>();
-        for (int i = 1; i <= number; i++)
-            numbers.Add(i);
-        return numbers.Aggregate((x, y) => x * y);
+        public Car(string brand, string country)
+        {
+            Manufacturer = brand;
+            CountryCode = country;
+        }
     }
 }
